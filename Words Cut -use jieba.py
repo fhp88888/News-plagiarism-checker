@@ -28,7 +28,8 @@ def main():
     #IO
     #default
     enterdir = input ("Please enter your dir: ")
-    #enterdir = "C:\\Users\\HiFan\\Desktop\\新建文件夹\\ATK\\there"
+    if enterdir == "":
+        enterdir = "news story\\"
     enterdir = enterdir.replace ("\\", "\\\\")
     targetdir = enterdir + "\\\\"
     dirlist = os.listdir(targetdir)
