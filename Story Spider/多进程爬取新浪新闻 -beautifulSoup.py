@@ -72,7 +72,10 @@ class GetText(object):
     def getTitle(self):
         return self.soup.find_all("h1", class_ = "main-title")[0].text        
     def getDate(self):
-        return self.soup.find_all("span", class_ = "date")[0].text
+        dateRow = str(self.soup.find_all("span", class_ = "date")[0].text)
+        #standardlize
+        date = dateRow.replace("年", "-").replace("月", "-").replace("日", "")
+        return date
     def getComeFrom(self):
         return self.soup.find_all(class_="source")[0].text
     def getNewsList(self):

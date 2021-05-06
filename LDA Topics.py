@@ -1,4 +1,3 @@
-import pkuseg
 import os
 import re
 import pandas as pd
@@ -12,8 +11,8 @@ import pyLDAvis
 import pyLDAvis.sklearn
 #csv
 import csv
-
-
+#time recognize
+from datetime import datetime
 
 def getSW():
     with open("StopWords.txt", 'r',encoding="utf-8") as fp:
@@ -65,25 +64,33 @@ def lable(lda, dirlist, tf, path):
     score = score.tolist()
     print ("I think topicNum is: ", topicNum)
     fileNo = 0
-    file = open("CSV_test.csv","w",newline = "", encoding = "utf-8-sig")
+    #delete privious TopicData.csv
+    try:
+        os.remove("TopicData.csv")
+        print("remove privious TopicData.csv")
+    except:
+        pass
+    file = open("TopicData.csv","w",newline = "", encoding = "utf-8-sig")
     writer = csv.writer(file)
     #write body
     for each in score:
-        textTopic = each.index(max(each))
         textName = dirlist[fileNo]
         #get file size
         filePath = path + "\\" + textName
         fileSize = os.path.getsize(filePath)
-        #get file No
-        index = textName.find("._")
-        if index != -1:
-            try:
-                textNum = int(textName[0:index])
-            except:
-                print("Numbering Err: ", textName," ignored.")
-                break
+        #get news No
+        index1 = textName.find("._")
+        textNum = int(textName[0:index1])
+        #get news date
+        index2 = textName.find("_", 9)
+        dateRow = textName[index1 +2:index2 -2] + ":" + textName[index2 -2:index2]
+        date = datetime.fromisoformat(dateRow)
+        dateList = [date.year, date.month, date.day, date.hour, date.minute]
+        #get news from
+        index3 = textName.find("_.")
+        comeFrom = textName[index2+1:index3]
         #Write
-        writer.writerow([textName, textTopic, fileSize, textNum] + each)
+        writer.writerow([textNum, textName[index3 +2:-4], fileSize] + dateList + [comeFrom] + each)
         fileNo = fileNo +1
     file.close()
 
@@ -92,19 +99,16 @@ def main():
     SWlist = getSW()
     #IO
     #default
-    
-    #When total.txt exist
     enterdir = input ("Please enter dir: ")
-    #enterdir = "C:\\Users\\HiFan\\Desktop\\新建文件夹\\ATK\\there"
+    if enterdir == "":
+        enterdir = "news story"
     targetdir = enterdir + "\\\\"
     dirlist = os.listdir(targetdir)
-    
-    #up
 
     df = pd.read_table("Total.txt", sep="\n",header=None)
     df.columns = ["content"]
     
-    n_topics = 90
+    n_topics = 30
     n_top_words = 30
     (featureName,lda, tf, tf_vectorizer) = vectorize(df.content,SWlist, n_topics)
 

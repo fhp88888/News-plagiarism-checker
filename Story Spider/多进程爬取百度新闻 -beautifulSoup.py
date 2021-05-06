@@ -78,9 +78,9 @@ class GetText(object):
         for eachSpan in date.find_all("span"):
             index = str(eachSpan).find("发布时间:")
             if index != -1:
-                d1 = str(eachSpan)[index+6:index+11].replace("-","月") + "日"
+                d1 = str(eachSpan)[index+6:index+11]
         d2 = date.find_all("span", class_ = "index-module_time_10s4U")[0].text
-        return("2021年"+d1+" "+str(d2).replace(":",""))
+        return(time.localtime().tm_year +"-"+d1+" "+str(d2).replace(":",""))
     def getComeFrom(self):
         return self.soup.find_all("p", class_="index-module_authorName_7y5nA")[0].text
     def getNewsList(self):
