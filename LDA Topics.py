@@ -100,6 +100,7 @@ def main():
     #IO
     #default
     enterdir = input ("Please enter dir: ")
+    topicNum = input ("Topic number?")
     if enterdir == "":
         enterdir = "news story"
     targetdir = enterdir + "\\\\"
@@ -108,7 +109,7 @@ def main():
     df = pd.read_table("Total.txt", sep="\n",header=None)
     df.columns = ["content"]
     
-    n_topics = 30
+    n_topics = int(topicNum)
     n_top_words = 30
     (featureName,lda, tf, tf_vectorizer) = vectorize(df.content,SWlist, n_topics)
 
@@ -119,10 +120,10 @@ def main():
     lable (lda, dirlist, tf, enterdir)
 
     #Data visible
-
+    '''
     data = pyLDAvis.sklearn.prepare(lda, tf, tf_vectorizer)
     pyLDAvis.show(data)
-    
+    '''
     print ("Program END")  
     
 if __name__ == "__main__":

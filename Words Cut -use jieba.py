@@ -35,6 +35,13 @@ def main():
     dirlist = os.listdir(targetdir)
     count = 0
     totalLen = len(dirlist)
+    #remove privious total.txt
+    try:
+        os.remove("Total.txt")
+        print("Removed privious total.txt")
+    except:
+        pass
+    #start words cut loop
     for eachfile in dirlist:
         fileAddress = targetdir + eachfile
         with open(fileAddress, "r", encoding="utf-8") as fd:
