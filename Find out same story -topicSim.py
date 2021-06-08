@@ -24,7 +24,7 @@ def personNameChecker(eachJudge, fileContent):
                     #print("find a person name")
                     passageNameList.append(eachWords[0])
         if len(passageNameList) == 0:
-            print("Not find person name in this passages")
+            print("Hasn't find person name in this passages")
             passageNameList.append("None")
         nameList.append(passageNameList)
     #check if there is same person name
@@ -33,20 +33,26 @@ def personNameChecker(eachJudge, fileContent):
     if nameList[0][0] != "None":
         checkName = nameList[0]
         #the first passage has at least one person name
-        for eachPassage in nameList[1:]:
+        
+        for thisNameList in range(1,len(nameList)):
+            eachPassage = nameList[thisNameList]
+            count = 0
             for each in eachPassage:
                 if each in checkName:
-                    print("Same name has been finded")
-                    #add same file index to sameNameFileResult list
-                    sameNameFileResult.append(eachJudge[nameList.index(eachPassage)])
-                    break
+                    #print("Same name has been finded")
+                    count +=1
+            #Consider only files contain more than 70% same name as same file
+            if count > int(0.7 * len(checkName)):
+                #add same file index to sameNameFileResult list
+                sameNameFileResult.append(eachJudge[thisNameList])
+                
         if len(sameNameFileResult) == 0:
             #this means there is no same person name in this file
             print("no same person name")
         else:
             #this means there is at least one same person name
             #add base file to same list
-            sameNameFileResult.append(eachJudge[0])
+            sameNameFileResult = [eachJudge[0]] + sameNameFileResult
             personNameCheckResult = sameNameFileResult
     else:
         #the base file has no person name, we cannot identify same file
@@ -69,7 +75,7 @@ def locationNameChecker(eachJudge, fileContent):
                     #print("find a Location name")
                     passageNameList.append(eachWords[0])
         if len(passageNameList) == 0:
-            print("Not find Location name in this passages")
+            print("Hasn't find Location name in this passages")
             passageNameList.append("None")
         nameList.append(passageNameList)
     #check if there is same Location name
@@ -78,20 +84,26 @@ def locationNameChecker(eachJudge, fileContent):
     if nameList[0][0] != "None":
         checkName = nameList[0]
         #the first passage has at least one Location name
-        for eachPassage in nameList[1:]:
+
+        for thisNameList in range(1,len(nameList)):
+            eachPassage = nameList[thisNameList]
+            count = 0
             for each in eachPassage:
                 if each in checkName:
-                    print("Same location name has been finded")
-                    #add same file index to sameNameFileResult list
-                    sameNameFileResult.append(eachJudge[nameList.index(eachPassage)])
-                    break
+                    #print("Same name has been finded")
+                    count +=1
+            #Consider only files contain more than 70% same name as same file
+            if count > int(0.7 * len(checkName)):
+                #add same file index to sameNameFileResult list
+                sameNameFileResult.append(eachJudge[thisNameList])
+                
         if len(sameNameFileResult) == 0:
             #this means there is no same Location name in this file
             print("no same location name")
         else:
             #this means there is at least one same Location name
             #add base file to same list
-            sameNameFileResult.append(eachJudge[0])
+            sameNameFileResult = [eachJudge[0]] + sameNameFileResult
             LocationNameCheckResult = sameNameFileResult
     else:
         #the base file has no Location name, we cannot identify same file
@@ -101,49 +113,77 @@ def locationNameChecker(eachJudge, fileContent):
     return(LocationNameCheckResult)
 
 def sameWordsProcess(cosResult, newsIndex, newsTopicName, newsFileName):
+    sameWordsProcessList = []
+    priviousFileContent = []
+    priviousFileContentIndex = []
     for eachJudge in cosResult:
         #read data
         fileContent = []
         for eachStory in eachJudge:
-            #get story direction
-            storyDir = "A:\\news identification project\\news story\\" + newsFileName[newsIndex.index(eachStory)]
-            print(storyDir)
-            with open(storyDir, "r", encoding = "utf-8") as file:
-                storyContent = file.read().replace("\n", " ")
-            wordsTag = pkusegWordsCut(storyContent)
-            fileContent.append(wordsTag)
+            #check if we have process this file before
+            if eachStory in priviousFileContentIndex:
+                #we have process this file before
+                print("load data")
+                fileContent.append(priviousFileContent[priviousFileContentIndex.index(eachStory)])
+            else:
+                #we have not process this file before
+                #get story direction
+                storyDir = "A:\\news identification project\\news story\\" + newsFileName[newsIndex.index(eachStory)]
+                print(storyDir)
+                with open(storyDir, "r", encoding = "utf-8") as file:
+                    storyContent = file.read().replace("\n", " ")
+                wordsTag = pkusegWordsCut(storyContent)
+                fileContent.append(wordsTag)
+                #save this data for further use
+                priviousFileContent.append(wordsTag)
+                priviousFileContentIndex.append(eachStory)
         print("successfully read data")
         #Person Name check
         personNameCheckResult = personNameChecker(eachJudge, fileContent)
-        print(personNameCheckResult)
+        print("Person name check result:", personNameCheckResult)
         #Location Name check
         locationNameCheckResult = locationNameChecker(eachJudge, fileContent)
-        print(locationNameCheckResult)
+        print("Location name check result:", locationNameCheckResult)
+        #cross check
+        #check if two list is empty
+        crossCheckFile = []
+        if len(personNameCheckResult) > 0 and len(locationNameCheckResult) > 0:
+            for each in personNameCheckResult:
+                if each in locationNameCheckResult:
+                    #this is same file
+                    crossCheckFile.append(each)
+        print("Cross check file: ", crossCheckFile)
+        if len(crossCheckFile) > 1:
+            sameWordsProcessList.append(crossCheckFile)
+
+    return(sameWordsProcessList)
 
 def cosSimilarityCaculate(newsIndex, dataRate, newsTopicName):
     sameFileIndexList = []
-    for baseRate in dataRate:
+    eachFileRate02 = 0 #debug
+    for baseRateIndex in range(0, len(dataRate)):
+        baseRate = dataRate[baseRateIndex]
         #similarity select
         x = baseRate
-        otherSim = [] + [newsIndex[dataRate.index(baseRate)]]
-        for eachFileRate in dataRate:
+        otherSim = [newsIndex[baseRateIndex]]
+        for eachFileRateIndex in range(0, len(dataRate)):
+            eachFileRate = dataRate[eachFileRateIndex]
             y = eachFileRate
             res = np.array([[x[i] * y[i], x[i] * x[i], y[i] * y[i]] for i in range(len(x))])
             cos = sum(res[:, 0]) / (np.sqrt(sum(res[:, 1])) * np.sqrt(sum(res[:, 2])))
             if cos >=0.9999999999:
-                #don't count the same file
-                if dataRate.index(baseRate) != dataRate.index(eachFileRate):
+                '''
+                #debug block
+                if newsIndex[baseRateIndex] == 326:
+                    print("326 is here")
+                    print("eachFileRateIndex: ", eachFileRateIndex)
+                    print("newsIndex: ", newsIndex[eachFileRateIndex])
+                '''
+                #don't count the base file
+                if baseRateIndex != eachFileRateIndex:
                     #sim file decteced
-                    otherSim.append(newsIndex[dataRate.index(eachFileRate)])
-        '''
-        if len(otherSim) != 0:
-            print(newsTopicName[dataRate.index(baseRate)])
-            print(newsIndex[dataRate.index(baseRate)])
-            for each in otherSim:
-                print(newsTopicName[newsIndex.index(each)])
-                print(each)
-            print("-"*20)
-        '''
+                    otherSim.append(newsIndex[eachFileRateIndex])
+                    
         #if we have same file, then append it to list
         if len(otherSim) > 1:
             sameFileIndexList.append(otherSim)
@@ -183,16 +223,12 @@ def main():
     print(cosResult)
     #same words accquire
     sameWordsResult = sameWordsProcess(cosResult, newsIndex, newsTopicName, newsFileName)
-    #locationSimResult = locationSimilarity()
-
-    #give result
-    #copyResult = copyJudge()
+    print(sameWordsResult)
 
     #save result to file
     #saveResult()
 
 def test():
-    print("test start!")
     #read story data file
     newsIndex = []
     dataRate = []
@@ -221,9 +257,15 @@ def test():
             #get news story full name
             newsFileName.append(row[1])
     print("Read ", len(newsIndex), " from CSV.")
-    
-    cosResult = [[158, 414], [24, 70]]
-    sameWordsProcess(cosResult, newsIndex, newsTopicName, newsFileName)
+    cosResult = cosSimilarityCaculate(newsIndex, dataRate, newsTopicName)
+    print(cosResult)
+    #cosResult = [[340, 329, 372]]
+    #same words accquire
+    sameWordsResult = sameWordsProcess(cosResult, newsIndex, newsTopicName, newsFileName)
+    print(sameWordsResult)
+
+    #save result to file
+    #saveResult()
     
 if __name__  == "__main__":
     test()
