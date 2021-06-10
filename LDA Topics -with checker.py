@@ -7,8 +7,8 @@ from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
 #LDA
 from sklearn.decomposition import LatentDirichletAllocation
 #viewable
-import pyLDAvis
-import pyLDAvis.sklearn
+#import pyLDAvis
+#import pyLDAvis.sklearn
 #csv
 import csv
 #time recognize
@@ -90,9 +90,32 @@ def lable(lda, dirlist, tf, path):
         index3 = textName.find("_.")
         comeFrom = textName[index2+1:index3]
         #Write
-        writer.writerow([textNum, textName[index3 +2:-4], fileSize] + dateList + [comeFrom] + each)
+        writer.writerow([textNum, textName, textName[index3 +2:-4], fileSize] + dateList + [comeFrom] + each)
         fileNo = fileNo +1
     file.close()
+
+def judgeLDATopic():
+    #read story data file
+    dataRate = []
+    #start read data
+    with open("TopicData.csv", encoding = "utf-8-sig") as file:
+        data_row = csv.reader(file)
+        for row in data_row:
+            length = len(row)
+            #get news topic rate
+            dataRate.append([float(i) for i in row[10:length+1]])
+    for baseRate in dataRate:
+        #similarity select
+        x = baseRate
+        count = 0
+        for eachFileRate in dataRate:
+            if eachFileRate == baseRate:
+                count +=1
+        if count > 1:
+            print("Test failed!")
+            return("Failed")
+    
+
 
 def main():
     np.set_printoptions(suppress=True)
@@ -100,7 +123,7 @@ def main():
     #IO
     #default
     enterdir = input ("Please enter dir: ")
-    topicNum = input ("Topic number?")
+    topicNum = input ("topic number start from: ")
     if enterdir == "":
         enterdir = "news story"
     targetdir = enterdir + "\\\\"
@@ -109,16 +132,20 @@ def main():
     df = pd.read_table("Total.txt", sep="\n",header=None)
     df.columns = ["content"]
     
-    n_topics = int(topicNum)
-    n_top_words = 30
-    (featureName,lda, tf, tf_vectorizer) = vectorize(df.content,SWlist, n_topics)
-
-    printTopWords(lda, featureName, n_top_words)
-    print (df.shape)
-    #lable
-    
-    lable (lda, dirlist, tf, enterdir)
-
+    correction = 0
+    while True:
+        n_topics = int(topicNum) + correction
+        n_top_words = 30
+        (featureName,lda, tf, tf_vectorizer) = vectorize(df.content,SWlist, n_topics)
+        #printTopWords(lda, featureName, n_top_words)
+        #lable
+        lable (lda, dirlist, tf, enterdir)
+        judge = judgeLDATopic()
+        if judge == "Failed":
+            correction +=1
+        else:
+            print("Topic number check pass!")
+            break
     #Data visible
     '''
     data = pyLDAvis.sklearn.prepare(lda, tf, tf_vectorizer)
